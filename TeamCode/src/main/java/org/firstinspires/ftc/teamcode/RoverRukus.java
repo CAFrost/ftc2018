@@ -29,20 +29,18 @@
 
 package org.firstinspires.ftc.teamcode;
 
-import android.graphics.Color;
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-//import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
+
+//import com.qualcomm.robotcore.hardware.ColorSensor;
 //import com.qualcomm.robotcore.hardware.DcMotorSimple;
 //import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 //import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 //import com.qualcomm.robotcore.hardware.SwitchableLight;
-import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 /**
  * This file contains an example of an iterative (Non-Linear) "OpMode".
@@ -58,8 +56,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="T:Lab", group="2018")
-public class TeleOpLab extends OpMode
+@TeleOp(name="RoverRukus", group="2018")
+public class RoverRukus extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor motor0 = null, motor1 = null, motor2 = null;
@@ -113,14 +111,21 @@ public class TeleOpLab extends OpMode
         {
             int position = motor2.getCurrentPosition();
             telemetry.addData("Encoder Position", position);
-            if (buttonArmUp)
+
+            if (buttonArmUp) //if (motor2.getCurrentPosition() <= 0)
             {
                 motor2.setDirection(DcMotor.Direction.FORWARD);
             }
-            if (buttonArmDown)
+            //else if (motor2.getCurrentPosition() >= 1000)
+            //{
+            //     motor2.setPower(0);
+           // }
+            if (buttonArmDown) //if (motor2.getCurrentPosition() <=1224)
             {
                 motor2.setDirection((DcMotor.Direction.REVERSE));
             }
+            //else if (motor2.getCurrentPosition() <=0)
+             //   motor2.setPower(0);
             motor2.setPower(1);
         }
         else
