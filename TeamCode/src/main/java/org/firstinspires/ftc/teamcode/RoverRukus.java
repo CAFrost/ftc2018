@@ -60,23 +60,28 @@ import com.qualcomm.robotcore.util.Range;
 public class RoverRukus extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor motor0 = null, motor1 = null, motor2 = null;
+    private DcMotor motorDriveLeft = null, motorDriveRight = null, motorLift = null, motorArm = null;
 
     private Servo servoClawLeft = null;
     private Servo servoClawRight = null;
+    private Servo servoArm = null;
+    private Servo servoSensor = null;
 
     @Override
     public void init() {
         telemetry.addData("Status", "Initialized");
 
-        motor0  = hardwareMap.get(DcMotor.class, "m0");
-        motor1  = hardwareMap.get(DcMotor.class, "m1");
-        motor2  = hardwareMap.get(DcMotor.class, "m2");
+        motorDriveLeft  = hardwareMap.get(DcMotor.class, "m0");
+        motorDriveRight  = hardwareMap.get(DcMotor.class, "m1");
+        motorLift  = hardwareMap.get(DcMotor.class, "m2");
+        motorArm  = hardwareMap.get(DcMotor.class, "m3");
 
         servoClawLeft = hardwareMap.get(Servo.class, "s0");
         servoClawRight = hardwareMap.get(Servo.class, "s1");
 //        closeClaw();
-
+        servoArm = hardwareMap.get(Servo.class, "s2");
+        servoSensor = hardwareMap.get(Servo.class, "s3");
+        
         telemetry.addData("Status", "Initialized");
     }
 
@@ -92,8 +97,8 @@ public class RoverRukus extends OpMode
         rightPower   = Range.clip(drive - turn, -0.9, 0.9) ;
 
         // Send calculated power to wheels
-        motor0.setPower(leftPower);
-        motor1.setPower(rightPower);
+        motorDriveLeft.setPower(leftPower);
+        motorDriveRight.setPower(rightPower);
 
         // Show the elapsed game time and wheel power.
         telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -109,28 +114,28 @@ public class RoverRukus extends OpMode
         boolean buttonArmDown=gamepad1.y;
         if (buttonArmUp || buttonArmDown)
         {
-            int position = motor2.getCurrentPosition();
+            int position = motorLift.getCurrentPosition();
             telemetry.addData("Encoder Position", position);
 
-            if (buttonArmUp) //if (motor2.getCurrentPosition() <= 0)
+            if (buttonArmUp) //if (motorLift.getCurrentPosition() <= 0)
             {
-                motor2.setDirection(DcMotor.Direction.FORWARD);
+                motorLift.setDirection(DcMotor.Direction.FORWARD);
             }
-            //else if (motor2.getCurrentPosition() >= 1000)
+            //else if (motorLift.getCurrentPosition() >= 1000)
             //{
-            //     motor2.setPower(0);
+            //     motorLift.setPower(0);
            // }
-            if (buttonArmDown) //if (motor2.getCurrentPosition() <=1224)
+            if (buttonArmDown) //if (motorLift.getCurrentPosition() <=1224)
             {
-                motor2.setDirection((DcMotor.Direction.REVERSE));
+                motorLift.setDirection((DcMotor.Direction.REVERSE));
             }
-            //else if (motor2.getCurrentPosition() <=0)
-             //   motor2.setPower(0);
-            motor2.setPower(1);
+            //else if (motorLift.getCurrentPosition() <=0)
+             //   motorLift.setPower(0);
+            motorLift.setPower(1);
         }
         else
         {
-            motor2.setPower(0);
+            motorLift.setPower(0);
         }
         telemetry.addData("Buttons", "Open (%b), Close (%b)", buttonOpen, buttonClose);
 
@@ -187,8 +192,9 @@ public class RoverRukus extends OpMode
 
     @Override
     public void stop() {
-        motor0.setPower(0);
-        motor1.setPower(0);
-        motor2.setPower(0);
+        motorDriveLeft.setPower(0);
+        motorDriveRight.setPower(0);
+        motorLift.setPower(0);
+        motorArm.setPower(0);
     }
 }
