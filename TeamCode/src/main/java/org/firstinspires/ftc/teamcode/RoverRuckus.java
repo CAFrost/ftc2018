@@ -31,7 +31,9 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
@@ -56,8 +58,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="RoverRukus", group="2018")
-public class RoverRukus extends OpMode
+@TeleOp(name="RoverRuckus", group="2018")
+public class RoverRuckus extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor motorDriveLeft = null, motorDriveRight = null, motorLift = null, motorArm = null;
@@ -66,6 +68,8 @@ public class RoverRukus extends OpMode
     private Servo servoClawRight = null;
     private Servo servoArm = null;
     private Servo servoSensor = null;
+    private ColorSensor sensorColor;
+    private DistanceSensor sensorDistance;
 
     @Override
     public void init() {
@@ -75,12 +79,15 @@ public class RoverRukus extends OpMode
         motorDriveRight  = hardwareMap.get(DcMotor.class, "m1");
         motorLift  = hardwareMap.get(DcMotor.class, "m2");
         motorArm  = hardwareMap.get(DcMotor.class, "m3");
+        motorDriveLeft.setDirection((DcMotor.Direction.REVERSE));
 
         servoClawLeft = hardwareMap.get(Servo.class, "s0");
         servoClawRight = hardwareMap.get(Servo.class, "s1");
-//        closeClaw();
+        closeClaw();
         servoArm = hardwareMap.get(Servo.class, "s2");
         servoSensor = hardwareMap.get(Servo.class, "s3");
+        sensorColor = hardwareMap.get(ColorSensor.class, "cs0");
+        sensorDistance = hardwareMap.get(DistanceSensor.class, "cs0");
         
         telemetry.addData("Status", "Initialized");
     }
@@ -106,18 +113,17 @@ public class RoverRukus extends OpMode
 
         boolean clawIsOpen=false;
         //boolean
-        boolean buttonOpen=gamepad2.a;
-        boolean buttonClose=gamepad2.b;
-        boolean buttonOpen60=gamepad2.y;
-        boolean buttonOpen40=gamepad2.x;
-        boolean buttonArmUp=gamepad1.x;
-        boolean buttonArmDown=gamepad1.y;
-        if (buttonArmUp || buttonArmDown)
+        boolean buttonOpen=gamepad2.y;
+        boolean buttonClose=gamepad2.x;
+        boolean buttonLiftUp=gamepad1.x;
+        boolean buttonLiftDown=gamepad1.y;
+        boolean buttonSensorUp=gamepad1.b;
+        if (buttonLiftUp || buttonLiftDown)
         {
             int position = motorLift.getCurrentPosition();
             telemetry.addData("Encoder Position", position);
 
-            if (buttonArmUp) //if (motorLift.getCurrentPosition() <= 0)
+            if (buttonLiftUp) //if (motorLift.getCurrentPosition() <= 0)
             {
                 motorLift.setDirection(DcMotor.Direction.FORWARD);
             }
@@ -125,13 +131,14 @@ public class RoverRukus extends OpMode
             //{
             //     motorLift.setPower(0);
            // }
-            if (buttonArmDown) //if (motorLift.getCurrentPosition() <=1224)
+            if (buttonLiftDown) //if (motorLift.getCurrentPosition() <=1224)
             {
                 motorLift.setDirection((DcMotor.Direction.REVERSE));
             }
             //else if (motorLift.getCurrentPosition() <=0)
              //   motorLift.setPower(0);
             motorLift.setPower(1);
+            telemetry.addData("Lift direction",  motorLift.getDirection().toString());
         }
         else
         {
@@ -147,14 +154,10 @@ public class RoverRukus extends OpMode
         {
             openClaw();
         }
-        else if (buttonOpen60)
-        {
-            openClaw60();
-        }
-        else if (buttonOpen40)
-        {
-            openClaw40();
-        }
+
+        if (buttonSensorUp)
+        {servoSensor.setPosition(0.8);}
+       
     }
 
     public void closeClaw(){
@@ -163,32 +166,16 @@ public class RoverRukus extends OpMode
         telemetry.addData("Servos", "Left (%d), Right (%d)", 0, 1);
     }
 
-    public void liftArm(){
 
-        telemetry.addData("Arm",  "Up");
-    }
-
-    public void lowerArm(){
-
-        telemetry.addData("Arm", "Down");
-    }
     public void openClaw(){
-        servoClawLeft.setPosition(1);
-        servoClawRight.setPosition(0);
+        servoClawLeft.setPosition(0.6);
+        servoClawRight.setPosition(0.4);
         telemetry.addData("Servos", "Left (%d), Right (%d)", 1, 0);
     }
 
-    public void openClaw60(){
-        servoClawLeft.setPosition(0.25);
-        servoClawRight.setPosition(0.75);
-        telemetry.addData("Servos", "Left (%d), Right (%d)", 1, 0);
-    }
 
-    public void openClaw40(){
-        servoClawLeft.setPosition(0.50);
-        servoClawRight.setPosition(0.50);
-        telemetry.addData("Servos", "Left (%d), Right (%d)", 1, 0);
-    }
+
+   
 
     @Override
     public void stop() {
