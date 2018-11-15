@@ -31,13 +31,11 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 //import com.qualcomm.robotcore.hardware.ColorSensor;
 //import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -59,8 +57,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@Autonomous(name="RoverRuckusAuto", group="2018")
-public class RoverRuckusAuto extends OpMode
+@Autonomous(name="RoverRuckusLandingAndTotem", group="2018")
+public class RoverRuckusLandingAndTotem extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor motorDriveLeft = null, motorDriveRight = null, motorLift = null, motorArm = null;
@@ -72,6 +70,9 @@ public class RoverRuckusAuto extends OpMode
     private ColorSensor sensorColor;
     private DistanceSensor sensorDistance;
     private int startingPosition;
+    private boolean driveBackwards , turnleft, driveForward, dropTotem, resetEncoderTurnLeft, resetEncoderDriveForward, raiseLift;
+    private int startingPositionDrive, startingPositionTurnLeft;
+
 
     @Override
     public void init() {
@@ -85,13 +86,26 @@ public class RoverRuckusAuto extends OpMode
         servoClawLeft = hardwareMap.get(Servo.class, "s0");
         servoClawRight = hardwareMap.get(Servo.class, "s1");
         closeClaw();
+        motorLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //motorDriveLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //motorDriveLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         servoArm = hardwareMap.get(Servo.class, "s2");
         servoSensor = hardwareMap.get(Servo.class, "s3");
         sensorColor = hardwareMap.get(ColorSensor.class, "cs0");
         sensorDistance = hardwareMap.get(DistanceSensor.class, "cs0");
 
         startingPosition = motorLift.getCurrentPosition();
-        servoSensor.setPosition(0.8);
+        startingPositionDrive = motorDriveLeft.getCurrentPosition();
+        servoSensor.setPosition(0.9);
+        driveBackwards=false;
+        driveForward = false;
+        turnleft = false;
+        dropTotem = false;
+        raiseLift = true;
+        resetEncoderDriveForward = false;
+        resetEncoderTurnLeft = false;
+
         telemetry.addData("Status", "Initialized");
     }
 
@@ -100,51 +114,126 @@ public class RoverRuckusAuto extends OpMode
         double leftPower;
         double rightPower;
 
-        leftPower    = 0;
-        rightPower   = 0;
+        leftPower = -0.5;
+        rightPower = -0.5;
 
-        // Send calculated power to wheels
-        motorDriveLeft.setPower(leftPower);
-        motorDriveRight.setPower(rightPower);
-
-        // Show the elapsed game time and wheel power.
-        telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+        if (raiseLift == true) {
 
 
-        int position = motorLift.getCurrentPosition();
-        telemetry.addData("Encoder Position", position);
+            int position = motorLift.getCurrentPosition();
+            motorLift.setDirection(DcMotor.Direction.REVERSE);
 
-        while (position < (startingPosition + 2000))
-        {
-            motorLift.setPower(1);
-            position = motorLift.getCurrentPosition();
+            telemetry.addData("Motors", "starting (%d), current (%d)", startingPosition, position);
+            if (position < (startingPosition + 6800)) {
+                //position = motorLift.getCurrentPosition();
+                motorLift.setPower(0.4);
+            } else {
+                motorLift.setPower(0);
+                driveBackwards = true;
+                raiseLift=false;
+
+
+            }
         }
-        motorLift.setPower(0);
+
+        if (driveBackwards == true){
+            int motorPosition = motorDriveLeft.getCurrentPosition();
+            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            if (motorPosition < (startingPositionDrive + 300)) {
+                motorDriveLeft.setPower(leftPower);
+                motorDriveRight.setPower(rightPower);
+            } else {
+                motorDriveLeft.setPower(0);
+                motorDriveRight.setPower(0);
+                driveBackwards = false;
+                turnleft = true;
+                resetEncoderTurnLeft = true;
+
+            }
+
+        }
+        if (turnleft == true) {
+            if (resetEncoderTurnLeft == true) {
+                startingPositionTurnLeft = motorDriveLeft.getCurrentPosition();
+                resetEncoderTurnLeft = false;
+            }
+            int motorPositionLeft = motorDriveLeft.getCurrentPosition();
+            telemetry.addData("TurnLeft", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("TurnLeft", "current (%d), starting (%d)", motorPositionLeft, startingPositionTurnLeft);
+
+            if (motorPositionLeft > (startingPositionTurnLeft - 1100)) {
+                motorDriveLeft.setPower(leftPower);
+                motorDriveRight.setPower(-rightPower);
+            } else {
+                motorDriveLeft.setPower(0);
+                motorDriveRight.setPower(0);
+                resetEncoderDriveForward = true;
+                driveForward = true;
+                turnleft = false;
+
+            }
+        }
+        if (driveForward == true){
+            if (resetEncoderDriveForward == true){
+                startingPositionDrive = motorDriveRight.getCurrentPosition();
+                resetEncoderDriveForward = false;
+            }
+            int motorPositionForward = motorDriveRight.getCurrentPosition();
+            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("Forward", "current (%d), starting (%d)", motorPositionForward, startingPositionDrive);
+
+            if (motorPositionForward > (startingPositionDrive - 5000)) {
+                motorDriveLeft.setPower(-leftPower);
+                motorDriveRight.setPower(-rightPower);
+            } else {
+                motorDriveLeft.setPower(0);
+                motorDriveRight.setPower(0);
+                driveForward = false;
+                dropTotem = true;
+
+            }
+
+
+        }
+        if (dropTotem == true){
+            servoClawLeft.setPosition(0);
+            servoClawRight.setPosition(1);
+        }
+        else{
+            servoClawRight.setPosition(0);
+            servoClawLeft.setPosition(1);
+            dropTotem = false;
+        }
+
+
+
+
 
         // drive backwards
 
         // lower lift
+        //motorLift.setDirection((DcMotor.Direction.FORWARD));
+
 
 
     }
 
     public void closeClaw(){
-        servoClawLeft.setPosition(0);
-        servoClawRight.setPosition(1);
+        servoClawLeft.setPosition(0.5);
+        servoClawRight.setPosition(0.5);
         telemetry.addData("Servos", "Left (%d), Right (%d)", 0, 1);
     }
 
 
     public void openClaw(){
-        servoClawLeft.setPosition(0.6);
-        servoClawRight.setPosition(0.4);
+        servoClawLeft.setPosition(0.2);
+        servoClawRight.setPosition(0.8);
         telemetry.addData("Servos", "Left (%d), Right (%d)", 1, 0);
     }
 
 
 
-   
+
 
     @Override
     public void stop() {

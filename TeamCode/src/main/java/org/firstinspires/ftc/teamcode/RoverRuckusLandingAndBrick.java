@@ -29,14 +29,13 @@
 
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.util.Range;
 
 //import com.qualcomm.robotcore.hardware.ColorSensor;
 //import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -58,8 +57,8 @@ import com.qualcomm.robotcore.util.Range;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
  */
 
-@TeleOp(name="RoverRuckus", group="2018")
-public class RoverRuckus extends OpMode
+@Autonomous(name="RoverRuckusLandingAndBrick", group="2018")
+public class RoverRuckusLandingAndBrick extends OpMode
 {
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor motorDriveLeft = null, motorDriveRight = null, motorLift = null, motorArm = null;
@@ -70,6 +69,10 @@ public class RoverRuckus extends OpMode
     private Servo servoSensor = null;
     private ColorSensor sensorColor;
     private DistanceSensor sensorDistance;
+    private int startingPosition;
+    private boolean drive;
+    private int startingPositionDrive;
+
 
     @Override
     public void init() {
@@ -80,16 +83,22 @@ public class RoverRuckus extends OpMode
         motorLift  = hardwareMap.get(DcMotor.class, "m2");
         motorArm  = hardwareMap.get(DcMotor.class, "m3");
         motorDriveLeft.setDirection((DcMotor.Direction.REVERSE));
-
         servoClawLeft = hardwareMap.get(Servo.class, "s0");
         servoClawRight = hardwareMap.get(Servo.class, "s1");
+        closeClaw();
+        motorLift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        motorLift.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //motorDriveLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //motorDriveLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         servoArm = hardwareMap.get(Servo.class, "s2");
         servoSensor = hardwareMap.get(Servo.class, "s3");
         sensorColor = hardwareMap.get(ColorSensor.class, "cs0");
         sensorDistance = hardwareMap.get(DistanceSensor.class, "cs0");
 
-        closeClaw();
+        startingPosition = motorLift.getCurrentPosition();
+        startingPositionDrive = motorDriveLeft.getCurrentPosition();
         servoSensor.setPosition(0.9);
+        drive=false;
         telemetry.addData("Status", "Initialized");
     }
 
@@ -97,84 +106,46 @@ public class RoverRuckus extends OpMode
     public void loop() {
         double leftPower;
         double rightPower;
-        double armPower;
 
-        double drive = -gamepad1.left_stick_y;
-        double turn  =  gamepad1.right_stick_x;
-        leftPower    = Range.clip(drive + turn, -0.9, 0.9) ;
-        rightPower   = Range.clip(drive - turn, -0.9, 0.9) ;
+        leftPower    = -0.5;
+        rightPower   = -0.5;
 
-        // Send calculated power to wheels
-        motorDriveLeft.setPower(leftPower);
-        motorDriveRight.setPower(rightPower);
+        int position = motorLift.getCurrentPosition();
+        motorLift.setDirection(DcMotor.Direction.REVERSE);
 
-        // Show the elapsed game time and wheel power.
-        telemetry.addData("Status", "Run Time: " + runtime.toString());
-        telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
-
-        armPower = -gamepad2.left_stick_y;
-        armPower = Range.clip(armPower, -0.3, 0.4);
-        motorArm.setPower(armPower);
-        telemetry.addData("Arm", " (%.2f)", armPower);
-
-        boolean clawIsOpen=false;
-        //boolean
-        boolean buttonOpen=gamepad2.y;
-        boolean buttonClose=gamepad2.x;
-        boolean buttonArmRaise=gamepad2.a;
-        boolean buttonArmLower=gamepad2.b;
-        boolean buttonLiftUp=gamepad1.x;
-        boolean buttonLiftDown=gamepad1.y;
-        boolean buttonSensorUp=gamepad1.b;
-        if (buttonLiftUp || buttonLiftDown)
+        telemetry.addData("Motors", "starting (%d), current (%d)", startingPosition, position);
+        if (position < (startingPosition + 6800))
         {
-            int position = motorLift.getCurrentPosition();
-            telemetry.addData("Encoder Position", position);
-
-            if (buttonLiftUp) //if (motorLift.getCurrentPosition() <= 0)
-            {
-                motorLift.setDirection(DcMotor.Direction.FORWARD);
-            }
-            //else if (motorLift.getCurrentPosition() >= 1000)
-            //{
-            //     motorLift.setPower(0);
-           // }
-            if (buttonLiftDown) //if (motorLift.getCurrentPosition() <=1224)
-            {
-                motorLift.setDirection((DcMotor.Direction.REVERSE));
-            }
-            //else if (motorLift.getCurrentPosition() <=0)
-             //   motorLift.setPower(0);
-            motorLift.setPower(1);
-            telemetry.addData("Lift direction",  motorLift.getDirection().toString());
+            //position = motorLift.getCurrentPosition();
+            motorLift.setPower(0.4);
         }
-        else
-        {
+        else {
             motorLift.setPower(0);
+
+
+            int motorposition = motorDriveLeft.getCurrentPosition();
+            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            if (motorposition < (startingPositionDrive + 600)) {
+                motorDriveLeft.setPower(leftPower);
+                motorDriveRight.setPower(rightPower);
+            } else {
+                motorDriveLeft.setPower(0);
+                motorDriveRight.setPower(0);
+                drive = false;
+
+            }
         }
-        telemetry.addData("Buttons", "Open (%b), Close (%b)", buttonOpen, buttonClose);
 
 
 
-        if (buttonClose)
-        {
-            closeClaw();
-        }
-        else if (buttonOpen)
-        {
-            openClaw();
-        }
 
-        if (buttonSensorUp)
-        {servoSensor.setPosition(0.9);}
+        // drive backwards
 
-        if (buttonArmRaise){
-            RaiseArm();
-        }
-        else if (buttonArmLower){
-            LowerArm();
-        }
-       
+        // lower lift
+        //motorLift.setDirection((DcMotor.Direction.FORWARD));
+
+
+
     }
 
     public void closeClaw(){
@@ -189,17 +160,6 @@ public class RoverRuckus extends OpMode
         servoClawRight.setPosition(0.8);
         telemetry.addData("Servos", "Left (%d), Right (%d)", 1, 0);
     }
-
-    public void RaiseArm(){
-        servoArm.setPosition(.5);
-        telemetry.addData("servos", "Up (%d), Down (%d)", 1, 0);
-    }
-
-    public void LowerArm(){
-        servoArm.setPosition(-.5);
-        telemetry.addData("Servos","Up(%d), Down(%d)", 0, 1);
-    }
-
 
 
 
