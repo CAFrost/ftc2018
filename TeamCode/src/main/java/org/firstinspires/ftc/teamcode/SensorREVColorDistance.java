@@ -54,6 +54,7 @@ import java.util.Locale;
  * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list.
  */
 @TeleOp(name = "Sensor: REVColorDistance", group = "Sensor")
+
 public class SensorREVColorDistance extends LinearOpMode {
 
     /**
@@ -75,18 +76,15 @@ public class SensorREVColorDistance extends LinearOpMode {
      */
     ColorSensor sensorColor;
     DistanceSensor sensorDistance;
-    private Servo servoArm = null;
 
     @Override
     public void runOpMode() {
 
         // get a reference to the color sensor.
-        sensorColor = hardwareMap.get(ColorSensor.class, "cs0");
+        sensorColor = hardwareMap.get(ColorSensor.class, "cs");
 
         // get a reference to the distance sensor that shares the same name.
-        sensorDistance = hardwareMap.get(DistanceSensor.class, "cs0");
-        servoArm = hardwareMap.get(Servo.class, "s1");
-        servoArm.setPosition(1);
+        sensorDistance = hardwareMap.get(DistanceSensor.class, "cs");
 
 
         // hsvValues is an array that will hold the hue, saturation, and value information.
@@ -127,35 +125,20 @@ public class SensorREVColorDistance extends LinearOpMode {
             telemetry.addData("Blue ", sensorColor.blue());
             telemetry.addData("Hue", hsvValues[0]);
 
+
+
+
+
             if (sensorDistance.getDistance(DistanceUnit.CM) <= 5.5 ){
                 telemetry.addData("sensor", "Stop") ;
             }
 
-            boolean servoDown50 = gamepad1.x;
-            boolean servoDown90 = gamepad1.a;
-            boolean servoUp = gamepad1.y;
-            if (servoDown50 && !servoDown90 && !servoUp)
-            {
-                servoArm.setPosition(0.5);
-            }
-            else if (!servoDown50 && servoDown90 && !servoUp)
-            {
-                if (sensorColor.blue() <= 30 && sensorDistance.getDistance(DistanceUnit.CM) > 0) // gold brick
-                {
-                    servoArm.setPosition(0.3);
-                }
-            }
-            else if (!servoDown50 && !servoDown90 && servoUp)
-            {
-                servoArm.setPosition(1);
-            }
 
-
-            if (sensorColor.blue() <= 30 && sensorDistance.getDistance(DistanceUnit.CM) > 0)
+            if (sensorColor.blue() <= 35 && sensorDistance.getDistance(DistanceUnit.CM) > 0)
             {
                 telemetry.addData("sensor","Gold");
             }
-            else if (sensorColor.blue() > 30 && sensorDistance.getDistance(DistanceUnit.CM) > 0)
+            else if (sensorColor.blue() > 35 && sensorDistance.getDistance(DistanceUnit.CM) > 0)
             {
                 telemetry.addData("sensor", "Silver") ;
             }
