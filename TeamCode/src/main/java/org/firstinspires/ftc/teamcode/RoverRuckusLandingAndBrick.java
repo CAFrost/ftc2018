@@ -70,8 +70,8 @@ public class RoverRuckusLandingAndBrick extends OpMode
     private ColorSensor sensorColor;
     private DistanceSensor sensorDistance;
     private int startingPosition;
-    private boolean drive;
-    private int startingPositionDrive;
+    private boolean driveBackwards , turnleft, driveForward, dropTotem, resetEncoderTurnLeft, resetEncoderDriveForward, raiseLift, turnRight, resetEncoderTurnRight;
+    private int startingPositionDrive, startingPositionTurnLeft;
 
 
     @Override
@@ -98,7 +98,16 @@ public class RoverRuckusLandingAndBrick extends OpMode
         startingPosition = motorLift.getCurrentPosition();
         startingPositionDrive = motorDriveLeft.getCurrentPosition();
         servoSensor.setPosition(0.9);
-        drive=false;
+        driveBackwards=false;
+        driveForward = false;
+        turnleft = false;
+        turnRight = false;
+        dropTotem = false;
+        raiseLift = true;
+        resetEncoderDriveForward = false;
+        resetEncoderTurnLeft = false;
+        resetEncoderTurnRight = false
+
         telemetry.addData("Status", "Initialized");
     }
 
@@ -107,34 +116,122 @@ public class RoverRuckusLandingAndBrick extends OpMode
         double leftPower;
         double rightPower;
 
-        leftPower    = -0.5;
-        rightPower   = -0.5;
+        leftPower = -0.5;
+        rightPower = -0.5;
 
-        int position = motorLift.getCurrentPosition();
-        motorLift.setDirection(DcMotor.Direction.REVERSE);
+        if (raiseLift == true) {
 
-        telemetry.addData("Motors", "starting (%d), current (%d)", startingPosition, position);
-        if (position < (startingPosition + 6800))
-        {
-            //position = motorLift.getCurrentPosition();
-            motorLift.setPower(0.4);
+
+            int position = motorLift.getCurrentPosition();
+            motorLift.setDirection(DcMotor.Direction.REVERSE);
+
+            telemetry.addData("Motors", "starting (%d), current (%d)", startingPosition, position);
+            if (position < (startingPosition + 6800)) {
+                //position = motorLift.getCurrentPosition();
+                motorLift.setPower(0.4);
+            } else {
+                motorLift.setPower(0);
+                driveBackwards = true;
+                raiseLift=false;
+
+
+            }
         }
-        else {
-            motorLift.setPower(0);
 
-
-            int motorposition = motorDriveLeft.getCurrentPosition();
+        if (driveBackwards == true){
+            int motorPosition = motorDriveLeft.getCurrentPosition();
             telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
-            if (motorposition < (startingPositionDrive + 600)) {
+            if (motorPosition < (startingPositionDrive + 300)) {
                 motorDriveLeft.setPower(leftPower);
                 motorDriveRight.setPower(rightPower);
             } else {
                 motorDriveLeft.setPower(0);
                 motorDriveRight.setPower(0);
-                drive = false;
+                driveBackwards = false;
+                turnleft = true;
+                resetEncoderTurnLeft = true;
+
+            }
+
+        }
+        if (turnleft == true) {
+            if (resetEncoderTurnLeft == true) {
+                startingPositionTurnLeft = motorDriveLeft.getCurrentPosition();
+                resetEncoderTurnLeft = false;
+            }
+            int motorPositionLeft = motorDriveLeft.getCurrentPosition();
+            telemetry.addData("TurnLeft", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("TurnLeft", "current (%d), starting (%d)", motorPositionLeft, startingPositionTurnLeft);
+
+            if (motorPositionLeft > (startingPositionTurnLeft - 1100)) {
+                motorDriveLeft.setPower(leftPower);
+                motorDriveRight.setPower(-rightPower);
+            } else {
+                motorDriveLeft.setPower(0);
+                motorDriveRight.setPower(0);
+                resetEncoderDriveForward = true;
+                driveForward = true;
+                turnleft = false;
 
             }
         }
+        if (driveForward == true){
+            if (resetEncoderDriveForward == true){
+                startingPositionDrive = motorDriveRight.getCurrentPosition();
+                resetEncoderDriveForward = false;
+            }
+            int motorPositionForward = motorDriveRight.getCurrentPosition();
+            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("Forward", "current (%d), starting (%d)", motorPositionForward, startingPositionDrive);
+
+            if (motorPositionForward > (startingPositionDrive - 2300)) {
+                motorDriveLeft.setPower(-leftPower);
+                motorDriveRight.setPower(-rightPower);
+            } else {
+                motorDriveLeft.setPower(0);
+                motorDriveRight.setPower(0);
+                driveForward = false;
+                turnRight = true;
+                resetEncoderTurnRight = true;
+            }
+        }
+        if (turnRight == true){
+            if (resetEncoderTurnRight == true){
+                startingPositionDrive = motorDriveRight.getCurrentPosition();
+                resetEncoderTurnRight = false;
+            }
+            int motorPositionForward = motorDriveRight.getCurrentPosition();
+            telemetry.addData("Motors", "left (%.2f), right (%.2f)", leftPower, rightPower);
+            telemetry.addData("Forward", "current (%d), starting (%d)", motorPositionForward, startingPositionDrive);
+
+            if (motorPositionForward > (startingPositionTurnLeft - 1100)) {
+                motorDriveLeft.setPower(-leftPower);
+                motorDriveRight.setPower(rightPower);
+            } else {
+                motorDriveLeft.setPower(0);
+                motorDriveRight.setPower(0);
+                turnRight = false;
+                dropTotem = true;
+                servoSensor.setPosition(0.5);
+
+
+            }
+        }
+
+
+
+
+        /*
+        if (dropTotem == true){
+            servoClawLeft.setPosition(0);
+            servoClawRight.setPosition(1);
+        }
+        else{
+            servoClawRight.setPosition(0);
+            servoClawLeft.setPosition(1);
+            dropTotem = false;
+        }
+        */
 
 
 
